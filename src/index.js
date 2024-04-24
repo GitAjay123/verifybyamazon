@@ -29,13 +29,13 @@ async function handleRequest(request) {
         JSON.stringify(
           {
             /* Extra curricular activities */ alive: true,
-            repository_name: "amazon-scraper",
+            repository_name: "verifybyamazon",
             repository_description:
-              "Serverless Amazon India Scraper with search and product API, made with Cloudflare worker",
-            repository_url: "https://github.com/tuhinpal/amazon-scraper",
-            made_by: "https://github.com/tuhinpal",
+              "Serverless with search and product API, made with Cloudflare worker",
+            repository_url: "https://github.com/GitAjay123/verifybyamazon",
+            made_by: "https://github.com/GitAjay123",
             api_endpoints:
-              "https://github.com/tuhinpal/amazon-scraper#api-endpoint",
+              "https://github.com/GitAjay123/verifybyamazon#api-endpoint",
           },
           null,
           2
@@ -54,7 +54,7 @@ async function handleRequest(request) {
     });
   } else {
     /* Respond for other request methods */
-    return Response.redirect("https://github.com/tuhinpal/amazon-scraper", 301);
+    return Response.redirect("https://github.com/GitAjay123/verifybyamazon", 301);
   }
 }
 
