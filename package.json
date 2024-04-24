@@ -1,8 +1,8 @@
 {
   "private": true,
-  "name": "amazon-scraper",
+  "name": "verifybyamazon",
   "version": "1.0.0",
-  "description": "Serverless amazon india scraper",
+  "description": "Serverless india scraper",
   "main": "src/index.js",
   "scripts": {
     "dev": "miniflare --watch --debug",
@@ -11,7 +11,7 @@
   "author": "Tuhin Kanti Pal <me@thetuhin.com>",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@cloudflare/wrangler": "^1.19.12",
-    "miniflare": "^2.8.1"
+    "@cloudflare/wrangler": "^1.21.0",
+    "miniflare": "^2.14.2"
   }
 }
