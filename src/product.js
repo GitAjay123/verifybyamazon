@@ -1,134 +1,154 @@
 import fixText from "./fixtext";
 
-const getProductDetails = async (query) => {
-    const productPage = await fetchProductPage(query);
-    if (!productPage) {
-        return null; // Failed to fetch product page
-    }
+const product = async (query) => {
+   const product_page = await (
+      await fetch(`https://www.amazon.in/${query}`)
+   ).text();
 
-    const productDetail = {
-        name: extractProductName(productPage),
-        image: extractProductImage(productPage),
-        price: extractProductPrice(productPage),
-        original_price: extractOriginalPrice(productPage),
-        in_stock: checkProductAvailability(productPage),
-        rating_details: extractRatingDetails(productPage),
-        features: extractProductFeatures(productPage),
-        product_link: `https://www.amazon.in/${query}`,
-    };
+   try {
+      var features = [];
+      var feat = product_page
+         .split('<ul class="a-unordered-list a-vertical a-spacing-mini">')[1]
+         .split("</ul>")[0];
+      var feat = feat.split('<span class="a-list-item">');
+      for (var i = 1; i < feat.length; i++) {
+         try {
+            features.push(fixText(feat[i].split("</span>")[0]));
+         } catch (err) {}
+      }
+   } catch (err) {
+      var features = [null];
+   }
 
-    return productDetail;
-};
+   var price = null;
+   var original_price = null;
 
-const fetchProductPage = async (query) => {
-    try {
-        const response = await fetch(`https://www.amazon.in/${query}`);
-        if (!response.ok) {
-            throw new Error('Failed to fetch product page');
-        }
-        return await response.text();
-    } catch (error) {
-        console.error(error);
-        return null;
-    }
-};
+   try {
+      var pricediv = product_page.split(/<div id="unifiedPrice_feature_div".*>/g);
 
-const extractProductName = (productPage) => {
-    try {
-        const productName = productPage
-            .split('<span id="productTitle" class="a-size-large product-title-word-break">')[1]
+      original_price = pricediv[1]
+         .split('<span class="a-offscreen">')[1]
+         .split("</span>")[0];
+
+      try {
+         price = pricediv[1]
+            .split(
+               '<span class="a-price a-text-price a-size-medium apexPriceToPay" data-a-size="b" data-a-color="price">'
+            )[1]
             .split("</span>")[0];
-        return fixText(productName);
-    } catch (error) {
-        console.error('Error extracting product name:', error.message);
-        return null;
-    }
-};
+         if (price.includes(">")) {
+            price = price.split(">")[1];
+         }
+      } catch (pe) {}
 
-const extractProductImage = (productPage) => {
-    try {
-        const image = productPage
+      if (price === null) {
+         price = pricediv[1]
+            .split(/<span class="a-price-whole">/g)[1]
+            .split("</span>")[0];
+      }
+
+      // Additional price extraction logic
+      if (!price) {
+         const priceElement = product_page
+            .split('<span class="a-price-symbol">₹</span>')[1]
+            .split('<span class="a-price-whole">')[1]
+            .split("</span>")[0];
+         price = priceElement.trim();
+      }
+   } catch (error) {}
+
+
+   if (original_price !== null) {
+      original_price = parseFloat(
+         original_price.replace("₹", "").replace(/,/g, "").trim()
+      );
+   }
+   if (price !== null) {
+      price = parseFloat(price.replace("₹", "").replace(/,/g, "").trim());
+   }
+
+   try {
+      var in_stock =
+         product_page
+         .split('id="availability"')[1]
+         .split("</div>")[0]
+         .toLowerCase()
+         .lastIndexOf("in stock.") !== -1;
+   } catch (e) {
+      var in_stock = product_page.split("In stock.").length > 1;
+   }
+
+   try {
+      var image = product_page
+         .split('<div id="imgTagWrapperId" class="imgTagWrapper">')[1]
+         .split('data-old-hires="')[1]
+         .split('"')[0]
+         .replaceAll("\n", "");
+      if (image === "") {
+         var image = product_page
             .split('<div id="imgTagWrapperId" class="imgTagWrapper">')[1]
-            .split('data-old-hires="')[1]
-            .split('"')[0]
+            .split('data-a-dynamic-image="{"')[1]
+            .split(""")[0]
             .replaceAll("\n", "");
-        return image === "" ? null : image;
-    } catch (error) {
-        console.error('Error extracting product image:', error.message);
-        return null;
-    }
+      }
+   } catch (e) {
+      var image = null;
+   }
+
+   try {
+      var review_section = product_page.split("ratings</span>")[0];
+      var ratings_count = parseInt(
+         lastEntry(review_section.split(">")).replace(/,/g, "").trim()
+      );
+      var rating = parseFloat(
+         lastEntry(
+            lastEntry(review_section.split("a-icon-star"))
+            .split("</span>")[0]
+            .split("out of")[0]
+            .split(">")
+         ).trim()
+      );
+      var rating_details = {
+         ratings_count,
+         rating
+      };
+   } catch (er) {
+      console.log(er.message);
+      var rating_details = null;
+   }
+
+   try {
+      var product_detail = {
+         name: fixText(
+            product_page
+            .split(
+               '<span id="productTitle" class="a-size-large product-title-word-break">'
+            )[1]
+            .split("</span>")[0]
+         ),
+         image,
+         price,
+         original_price,
+         in_stock,
+         rating_details,
+         features,
+         product_link: `https://www.amazon.in/${query}`,
+      };
+   } catch (err) {
+      var product_detail = null;
+   }
+
+   return JSON.stringify({
+         status: true,
+         query,
+         fetch_from: `https://www.amazon.in/${query}`,
+         product_detail,
+      },
+      null,
+      2
+   );
 };
 
-const extractProductPrice = (productPage) => {
-    try {
-        const priceContainer = productPage
-            .split('<div id="corePrice_feature_div" class="celwidget"')[1]
-            .split('</div>')[0];
-        const price = priceContainer
-            .split('<span class="a-price-symbol">')[1]
-            .split('</span>')[0]
-            .trim();
-        return parseFloat(price.replace("₹", "").replace(/,/g, "").trim());
-    } catch (error) {
-        console.error('Error extracting product price:', error.message);
-        return null;
-    }
-};
+const lastEntry = (array) => array[array.length - 1];
 
-const extractOriginalPrice = (productPage) => {
-    try {
-        const originalPrice = productPage
-            .split('<span class="a-offscreen">')[1]
-            .split("</span>")[0];
-        return parseFloat(originalPrice.replace("₹", "").replace(/,/g, "").trim());
-    } catch (error) {
-        console.error('Error extracting original price:', error.message);
-        return null;
-    }
-};
-
-const checkProductAvailability = (productPage) => {
-    try {
-        return productPage.toLowerCase().includes("in stock");
-    } catch (error) {
-        console.error('Error checking product availability:', error.message);
-        return false;
-    }
-};
-
-const extractRatingDetails = (productPage) => {
-    try {
-        const ratingsCount = parseInt(
-            productPage.split('total ratings</span>')[0]
-                      .split('">')[1]
-                      .replace(/,/g, "").trim()
-        );
-        const rating = parseFloat(
-            productPage.split('aria-label="')[1]
-                      .split(' out')[0]
-                      .trim()
-        );
-        return { ratings_count: ratingsCount, rating: rating };
-    } catch (error) {
-        console.error('Error extracting rating details:', error.message);
-        return null;
-    }
-};
-
-const extractProductFeatures = (productPage) => {
-    try {
-        const featuresSection = productPage
-            .split('<div id="feature-bullets" class="a-section a-spacing-medium a-spacing-top-small">')[1]
-            .split('</ul>')[0];
-        const features = featuresSection
-            .split('<span class="a-list-item">')
-            .slice(1)
-            .map(feature => fixText(feature.split("</span>")[0].trim()));
-        return features.length > 0 ? features : [null];
-    } catch (error) {
-        console.error('Error extracting product features:', error.message);
-        return [null];
-    }
-};
-
-export default getProductDetails;
+export default product;
