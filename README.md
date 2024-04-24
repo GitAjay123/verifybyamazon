@@ -92,7 +92,7 @@ _Note : All currencies are in INR (₹)_
 
 ### Deploy
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/tuhinpal/amazon-scraper)
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/GitAjay123/verifybyamazon)
 
 ### Development
 
@@ -114,6 +114,3 @@ _Note : All currencies are in INR (₹)_
 - Copyright 2021 by [Tuhin Kanti Pal](https://github.com/tuhinpal)
 
 ### Connect :
-
-- [Channel](https://telegram.dog/tprojects)
-- [Support Group](https://telegram.dog/t_projects)
